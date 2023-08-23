@@ -5,36 +5,41 @@ is valid UTF-8 encoding.
 """
 
 def validUTF8(data):
-    num_bytes_to_check = 0
-    
-    for num in data:
-        # Check if this byte is the start of a character
-        if num_bytes_to_check == 0:
-            if (num >> 7) == 0b0:
-                num_bytes_to_check = 0
-            elif (num >> 5) == 0b110:
-                num_bytes_to_check = 1
-            elif (num >> 4) == 0b1110:
-                num_bytes_to_check = 2
-            elif (num >> 3) == 0b11110:
-                num_bytes_to_check = 3
-            else:
+    """
+    Determine if a given data set is valid UTF-8 encoding.
+    - Returns: True if data is valid UTF-8 encoding, False otherwise.
+    - A character in UTF-8 can be 1 to 4 bytes long.
+    - The data set can contain multiple characters.
+    - The data will be represented by a list of integers, where each integer
+        represents a byte, therefore you only need to handle the 8 least
+        significant bits of each integer.
+    """
+    # number of bytes in the current UTF-8 character being processed
+    number_of_bytes = 0
+    mask = 255  # 11111111 in binary (8 bits)
+
+    for byte in data:
+        # Check if the first bit is a 0
+        if number_of_bytes == 0:
+            # mask out the first bit
+            byte = byte & mask
+            # Check if the first 5 bits are 110 (0b110xxxxx)
+            if (byte >> 5) == 0b110:
+                number_of_bytes = 1
+            # Check if the first 4 bits are 1110 (0b1110xxxx)
+            elif (byte >> 4) == 0b1110:
+                number_of_bytes = 2
+            # Check if the first 3 bits are 11110 (0b11110xxx)
+            elif (byte >> 3) == 0b11110:
+                number_of_bytes = 3
+            # check if the first bit is a 1 (0b1xxxxxxx)
+            elif (byte >> 7):
                 return False
         else:
-            # Check if this byte is a continuation byte
-            if (num >> 6) != 0b10:
+            # Check if the first 2 bits are 10 (0b10xxxxxx)
+            if (byte >> 6) != 0b10:
                 return False
-            num_bytes_to_check -= 1
-        
-    # Check if all characters were validated
-    return num_bytes_to_check == 0
+            # Decrement the number of bytes in the current UTF-8 character
+            number_of_bytes -= 1
 
-# Test cases
-data1 = [65]
-print(validUTF8(data1))  # Output: True
-
-data2 = [80, 121, 116, 104, 111, 110, 32, 105, 115, 32, 99, 111, 111, 108, 33]
-print(validUTF8(data2))  # Output: True
-
-data3 = [229, 65, 127, 256]
-print(validUTF8(data3))  # Output: False
+    return number_of_bytes == 0
